@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN | vibe.pub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #050505;
+            color: #d1d1d1;
+        }
+        input, textarea {
+            background-color: #0d0d0d !important;
+            border: 1px solid #333 !important;
+            color: #fff !important;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff41 !important;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+        }
+        .btn-primary {
+            background-color: #00ff41;
+            color: #000;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #00cc33;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            border: 1px solid #333;
+            color: #888;
+        }
+        .btn-secondary:hover {
+            border-color: #555;
+            color: #fff;
+        }
+        pre {
+            background-color: #0d0d0d;
+            border: 1px solid #1a1a1a;
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-12 border-b border-zinc-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tighter">ADMIN_DASHBOARD<span class="text-[#00ff41]">.</span>v1</h1>
+                <p class="text-zinc-500 text-sm">Local session management & telemetry logging</p>
+            </div>
+            <a href="../index.html" target="_blank" class="btn-secondary px-4 py-2 text-xs rounded-sm">VIEW_LIVE_SITE</a>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Left: Forms -->
+            <div class="space-y-12">
+                <!-- Next Session Form -->
+                <section>
+                    <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold mb-6 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-[#00ff41] rounded-full"></span> 01_NEXT_SESSION_CONFIG
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Session Date</label>
+                                <input type="text" id="next-date" placeholder="e.g. May 15, 2024" class="w-full p-3 rounded-sm text-sm">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Local Time (NZST)</label>
+                                <input type="text" id="next-time" placeholder="e.g. 18:00 - 21:00" class="w-full p-3 rounded-sm text-sm">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-zinc-500 uppercase">Location / Link</label>
+                            <input type="text" id="next-location" placeholder="e.g. The Spaced Out Bar / Discord" class="w-full p-3 rounded-sm text-sm">
+                        </div>
+                        <button onclick="updateNextSession()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Update Session Banner</button>
+                    </div>
+                </section>
+
+                <!-- Add Log Entry -->
+                <section>
+                    <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold mb-6 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-[#00ff41] rounded-full"></span> 02_ADD_LOG_ENTRY
+                    </h2>
+                    <div class="space-y-4 p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Contributor Name</label>
+                                <input type="text" id="log-name" placeholder="Handle / Name" class="w-full p-3 rounded-sm text-sm">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Project Link (Optional)</label>
+                                <input type="text" id="log-link" placeholder="https://github.com/..." class="w-full p-3 rounded-sm text-sm">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-zinc-500 uppercase">Task Description</label>
+                            <textarea id="log-desc" rows="4" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
+                        </div>
+                        <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Session Log</button>
+                    </div>
+                </section>
+
+                <!-- Current Logs List -->
+                <section>
+                    <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-6">
+                        03_ACTIVE_LOGS (<span id="active-log-count">0</span>)
+                    </h2>
+                    <div id="active-logs-list" class="space-y-3">
+                        <!-- Items injected here -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right: Preview & Sync -->
+            <div class="relative">
+                <div class="sticky top-12 space-y-6">
+                    <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold flex items-center justify-between">
+                        <span>DATA_OUT_STREAM</span>
+                        <span class="text-zinc-600 font-normal">data.json</span>
+                    </h2>
+                    <div class="relative group">
+                        <pre id="json-preview" class="p-6 text-xs text-zinc-400 overflow-auto max-h-[70vh] rounded-sm"></pre>
+                        <button onclick="copyAndSync()" class="absolute top-4 right-4 bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1 rounded-sm text-[10px] uppercase transition-colors">
+                            Copy JSON for Sync
+                        </button>
+                    </div>
+                    
+                    <div class="p-6 bg-blue-900/10 border border-blue-900/30 rounded-sm">
+                        <h4 class="text-xs font-bold text-blue-400 mb-2 uppercase italic">Sync Instructions:</h4>
+                        <ol class="text-[11px] text-blue-300/70 list-decimal ml-4 space-y-2">
+                            <li>Check the preview for correctness.</li>
+                            <li>Click "Copy JSON for Sync".</li>
+                            <li>Tell Antigravity: "Update vibe.pub data.json with this content: [Paste Here]".</li>
+                        </ol>
+                    </div>
+
+                    <div id="sync-status" class="hidden p-3 bg-[#00ff41]/10 border border-[#00ff41]/30 text-[#00ff41] text-[10px] text-center rounded-sm animate-pulse">
+                        CONTENT_COPIED_TO_CLIPBOARD // READY_FOR_SYNC
+                    </div>
+                    
+                    <button onclick="resetData()" class="text-[10px] text-red-500 uppercase hover:underline opacity-50 hover:opacity-100 transition-opacity">
+                        [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentState = {
+            next_session: { date: "", time: "", location: "" },
+            logs: []
+        };
+
+        // Load Initial Data
+        async function init() {
+            // Try localStorage first
+            const cached = localStorage.getItem('vibe_pub_draft');
+            if (cached) {
+                currentState = JSON.parse(cached);
+                renderAll();
+                return;
+            }
+
+            // Otherwise fetch from data.json
+            try {
+                const response = await fetch('../data.json');
+                const data = await response.json();
+                currentState = data;
+                saveDraft();
+                renderAll();
+            } catch (error) {
+                console.error('No existing session found.');
+                updatePreview();
+            }
+        }
+
+        function saveDraft() {
+            localStorage.setItem('vibe_pub_draft', JSON.stringify(currentState));
+            updatePreview();
+        }
+
+        function updatePreview() {
+            document.getElementById('json-preview').textContent = JSON.stringify(currentState, null, 2);
+        }
+
+        function renderAll() {
+            // Update Banner Fields
+            document.getElementById('next-date').value = currentState.next_session.date || "";
+            document.getElementById('next-time').value = currentState.next_session.time || "";
+            document.getElementById('next-location').value = currentState.next_session.location || "";
+
+            // Render Logs List
+            renderLogsList();
+            updatePreview();
+        }
+
+        function updateNextSession() {
+            currentState.next_session = {
+                date: document.getElementById('next-date').value,
+                time: document.getElementById('next-time').value,
+                location: document.getElementById('next-location').value
+            };
+            saveDraft();
+        }
+
+        function addLogEntry() {
+            const name = document.getElementById('log-name').value;
+            const link = document.getElementById('log-link').value;
+            const desc = document.getElementById('log-desc').value;
+
+            if (!name || !desc) {
+                alert("Missing required fields: Name and Description.");
+                return;
+            }
+
+            currentState.logs.unshift({ name, description: desc, link });
+            
+            // Clear fields
+            document.getElementById('log-name').value = "";
+            document.getElementById('log-link').value = "";
+            document.getElementById('log-desc').value = "";
+            
+            saveDraft();
+            renderLogsList();
+        }
+
+        function renderLogsList() {
+            const container = document.getElementById('active-logs-list');
+            const count = document.getElementById('active-log-count');
+            count.textContent = currentState.logs.length;
+
+            container.innerHTML = currentState.logs.map((log, index) => `
+                <div class="p-4 bg-[#111] border border-zinc-900 rounded-sm flex justify-between items-start group">
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-bold text-white truncate">${log.name}</div>
+                        <div class="text-[10px] text-zinc-500 truncate mb-1">${log.description.substring(0, 60)}...</div>
+                    </div>
+                    <button onclick="deleteLog(${index})" class="text-zinc-700 hover:text-red-500 transition-colors text-xs p-1">
+                        &times;
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function deleteLog(index) {
+            if (confirm("Delete this log entry?")) {
+                currentState.logs.splice(index, 1);
+                saveDraft();
+                renderLogsList();
+            }
+        }
+
+        function copyAndSync() {
+            const json = JSON.stringify(currentState, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                const status = document.getElementById('sync-status');
+                status.classList.remove('hidden');
+                setTimeout(() => status.classList.add('hidden'), 5000);
+            });
+        }
+
+        function resetData() {
+            if (confirm("THIS WILL ERASE ALL LOCAL DRAFT DATA. PROCEED?")) {
+                localStorage.removeItem('vibe_pub_draft');
+                location.reload();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
