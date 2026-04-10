@@ -10,9 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --terminal-green: #00ff41;
-            --terminal-glow: rgba(0, 255, 65, 0.2);
-            --bg-dark: #0a0a0a;
+            --accent-magenta: #ff00ff;
+            --accent-cyan: #00ffff;
+            --neon-glow-magenta: rgba(255, 0, 255, 0.3);
+            --neon-glow-cyan: rgba(0, 255, 255, 0.3);
+            --bg-dark: #050505;
             --border-muted: #1a1a1a;
         }
         body {
@@ -25,8 +27,8 @@
             transition: all 0.3s ease;
         }
         .glow-border:hover {
-            border-color: var(--terminal-green);
-            box-shadow: 0 0 15px var(--terminal-glow);
+            border-color: var(--accent-magenta);
+            box-shadow: 0 0 20px var(--neon-glow-magenta);
         }
         .scanline {
             width: 100%;
@@ -47,21 +49,60 @@
         }
         @keyframes blink {
             from, to { color: transparent; }
-            50% { color: var(--terminal-green); }
+            50% { color: var(--accent-cyan); }
+        }
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+        .glitch-text::before {
+            color: var(--accent-magenta);
+            z-index: -1;
+            animation: glitch-1 2s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            color: var(--accent-cyan);
+            z-index: -2;
+            animation: glitch-2 3s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-1 {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        @keyframes glitch-2 {
+            0% { transform: translate(0); }
+            20% { transform: translate(2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(-2px, 2px); }
+            100% { transform: translate(0); }
         }
     </style>
 </head>
-<body class="min-h-screen selection:bg-[#00ff41] selection:text-black">
+<body class="min-h-screen selection:bg-[#ff00ff] selection:text-white">
     <div class="scanline pointer-events-none"></div>
 
     <div class="max-w-4xl mx-auto px-6 py-12 md:py-24">
         <!-- Hero Section -->
-        <header class="mb-20">
-            <h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-4 text-white">
-                vibe<span class="text-[#00ff41]">.</span>pub
-            </h1>
+        <header class="mb-20 text-center md:text-left">
+            <div class="inline-block mb-8">
+                <img src="assets/vibe-pub-logo.png" alt="vibe.pub logo" class="h-32 md:h-48 w-auto mx-auto md:mx-0 drop-shadow-[0_0_15px_rgba(255,0,255,0.4)]">
+            </div>
             <p class="text-lg md:text-xl text-zinc-500 leading-relaxed max-w-2xl">
-                A monthly session where developers and enthusiasts build projects live using AI. Low friction, high output. <span class="text-[#00ff41]">_</span>
+                A monthly session where developers and enthusiasts build projects live using AI. Low friction, high output. <span class="text-[#ff00ff] cursor-blink">_</span>
             </p>
         </header>
 
@@ -69,21 +110,21 @@
         <section id="next-session" class="mb-20">
             <div class="glow-border bg-[#0d0d0d] p-8 rounded-sm relative overflow-hidden group">
                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <svg class="w-24 h-24 text-[#00ff41]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    <svg class="w-24 h-24 text-[#ff00ff]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                 </div>
                 <div class="relative z-10">
-                    <div class="text-xs uppercase tracking-widest text-[#00ff41] mb-2 font-bold">Status: Incoming Session</div>
+                    <div class="text-xs uppercase tracking-widest text-[#ff00ff] mb-2 font-bold glitch-text" data-text="Status: Incoming Session">Status: Incoming Session</div>
                     <div id="session-details" class="space-y-4">
                         <div class="text-3xl font-bold text-white tracking-tight">
                             <span id="session-date">Loading...</span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-zinc-400">
                             <div class="flex items-center gap-2">
-                                <span class="text-[#00ff41]">[ TIME ]</span>
+                                <span class="text-[#00ffff]">[ TIME ]</span>
                                 <span id="session-time">...</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-[#00ff41]">[ LOC ]</span>
+                                <span class="text-[#00ffff]">[ LOC ]</span>
                                 <span id="session-location">...</span>
                             </div>
                         </div>
@@ -112,10 +153,10 @@
             <div class="flex items-center gap-4">
                 <span>&copy; vibe.pub</span>
                 <span class="opacity-20">|</span>
-                <a href="#" class="hover:text-[#00ff41] transition-colors">GitHub</a>
+                <a href="#" class="hover:text-[#ff00ff] transition-colors">GitHub</a>
             </div>
             <div class="flex items-center gap-2">
-                <span class="w-2 h-2 bg-[#00ff41] rounded-full animate-pulse"></span>
+                <span class="w-2 h-2 bg-[#ff00ff] rounded-full animate-pulse"></span>
                 <span class="font-mono">UPLINK_STABLE</span>
             </div>
         </footer>
@@ -150,12 +191,12 @@
                 logCount.textContent = `${data.logs.length} ENTRIES FOUND`;
                 
                 container.innerHTML = data.logs.map(log => `
-                    <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#00ff41] transition-all">
+                    <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#ff00ff] transition-all">
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                            <h3 class="text-lg font-bold text-[#00ff41]">${log.name || 'Anonymous'}</h3>
+                            <h3 class="text-lg font-bold text-[#00ffff]">${log.name || 'Anonymous'}</h3>
                             ${log.link ? `
                                 <a href="${log.link}" target="_blank" class="text-xs text-zinc-500 hover:text-white flex items-center gap-1 group">
-                                    <span class="group-hover:translate-x-1 transition-transform">ACCESS_PROJECT_LINK >></span>
+                                    <span class="group-hover:translate-x-1 transition-transform tracking-widest">ACCESS_PROJECT_LINK &gt;&gt;</span>
                                 </a>
                             ` : ''}
                         </div>
