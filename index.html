@@ -44,36 +44,15 @@
             0% { bottom: 100%; }
             100% { bottom: -100px; }
         }
-        .cursor-blink {
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            from, to { color: transparent; }
-            50% { color: var(--accent-cyan); }
-        }
-        .glitch-text {
-            position: relative;
-            display: inline-block;
-        }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { from, to { color: transparent; } 50% { color: var(--accent-cyan); } }
+
+        .glitch-text { position: relative; display: inline-block; }
         .glitch-text::before, .glitch-text::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
         }
-        .glitch-text::before {
-            color: var(--accent-magenta);
-            z-index: -1;
-            animation: glitch-1 2s infinite linear alternate-reverse;
-        }
-        .glitch-text::after {
-            color: var(--accent-cyan);
-            z-index: -2;
-            animation: glitch-2 3s infinite linear alternate-reverse;
-        }
+        .glitch-text::before { color: var(--accent-magenta); z-index: -1; animation: glitch-1 2s infinite linear alternate-reverse; }
+        .glitch-text::after { color: var(--accent-cyan); z-index: -2; animation: glitch-2 3s infinite linear alternate-reverse; }
         @keyframes glitch-1 {
             0% { transform: translate(0); }
             20% { transform: translate(-2px, 2px); }
@@ -90,6 +69,47 @@
             80% { transform: translate(-2px, 2px); }
             100% { transform: translate(0); }
         }
+
+        /* Session Vertical UI */
+        .session-container {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 2rem;
+            position: relative;
+        }
+        .session-sidebar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            border-right: 2px solid var(--border-muted);
+            position: relative;
+        }
+        .session-sidebar::before, .session-sidebar::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            width: 15px;
+            height: 2px;
+            background-color: var(--accent-magenta);
+            box-shadow: 0 0 10px var(--accent-magenta);
+        }
+        .session-sidebar::before { top: 0; }
+        .session-sidebar::after { bottom: 0; }
+
+        .vertical-metadata {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 10px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            height: 100%;
+            padding: 2rem 0;
+        }
+        .vertical-metadata b { color: var(--accent-cyan); }
     </style>
 </head>
 <body class="min-h-screen selection:bg-[#ff00ff] selection:text-white">
@@ -135,13 +155,13 @@
 
         <!-- Session Log -->
         <section>
-            <div class="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
-                <h2 class="text-2xl font-bold text-white tracking-tight">Session Log</h2>
-                <div id="log-count" class="text-xs text-zinc-500 font-mono">0 ENTRIES FOUND</div>
+            <div class="flex items-center justify-between mb-12 border-b border-zinc-800 pb-4">
+                <h2 class="text-2xl font-bold text-white tracking-tight">Transmission History</h2>
+                <div id="log-count" class="text-xs text-zinc-500 font-mono">0 SESSIONS DISCOVERED</div>
             </div>
 
-            <div id="logs-container" class="space-y-6">
-                <!-- Log Cards will be injected here -->
+            <div id="sessions-master-container" class="space-y-32">
+                <!-- Grouped Sessions go here -->
                 <div class="text-zinc-600 italic py-12 text-center" id="empty-state">
                     Waiting for telemetry data...
                 </div>
@@ -175,39 +195,60 @@
         }
 
         function renderPage(data) {
-            // Render Next Session
-            const next = data.next_session;
-            document.getElementById('session-date').textContent = next.date || 'TBD';
-            document.getElementById('session-time').textContent = next.time || 'TBD';
-            document.getElementById('session-location').textContent = next.location || 'TBD';
+            // Render "Advertised" Session Banner
+            const advertised = data.sessions.find(s => s.id === data.advertised_session_id);
+            if (advertised) {
+                document.getElementById('session-date').textContent = advertised.date || 'TBD';
+                document.getElementById('session-time').textContent = advertised.time || 'TBD';
+                document.getElementById('session-location').textContent = advertised.location || 'TBD';
+            }
 
-            // Render Logs
-            const container = document.getElementById('logs-container');
+            // Render Grouped Sessions
+            const masterContainer = document.getElementById('sessions-master-container');
             const emptyState = document.getElementById('empty-state');
             const logCount = document.getElementById('log-count');
 
-            if (data.logs && data.logs.length > 0) {
+            // Find sessions with logs (or all sessions?)
+            const sessionsWithLogs = data.sessions.filter(s => s.logs && s.logs.length > 0);
+
+            if (sessionsWithLogs.length > 0) {
                 emptyState.classList.add('hidden');
-                logCount.textContent = `${data.logs.length} ENTRIES FOUND`;
+                logCount.textContent = `${sessionsWithLogs.length} SESSIONS DISCOVERED`;
                 
-                container.innerHTML = data.logs.map(log => `
-                    <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#ff00ff] transition-all">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                            <h3 class="text-lg font-bold text-[#00ffff]">${log.name || 'Anonymous'}</h3>
-                            ${log.link ? `
-                                <a href="${log.link}" target="_blank" class="text-xs text-zinc-500 hover:text-white flex items-center gap-1 group">
-                                    <span class="group-hover:translate-x-1 transition-transform tracking-widest">ACCESS_PROJECT_LINK &gt;&gt;</span>
-                                </a>
-                            ` : ''}
+                masterContainer.innerHTML = sessionsWithLogs.map(session => `
+                    <div class="session-container group">
+                        <!-- Sidebar / Bracket -->
+                        <div class="session-sidebar border-zinc-800 group-hover:border-[var(--accent-magenta)] transition-colors">
+                            <div class="vertical-metadata font-mono">
+                                <span><b>LOC</b> ${session.location || 'UNKNOWN'}</span>
+                                <span class="my-8"><b>TIME</b> ${session.time || 'UNKNOWN'}</span>
+                                <span><b>DATE</b> ${session.date || 'UNKNOWN'}</span>
+                            </div>
                         </div>
-                        <p class="text-zinc-400 leading-relaxed font-light">
-                            ${log.description || 'No data available.'}
-                        </p>
+
+                        <!-- Logs Grid -->
+                        <div class="space-y-6">
+                            ${session.logs.map(log => `
+                                <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#ff00ff] transition-all">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-lg font-bold text-[#00ffff]">${log.name || 'Anonymous'}</h3>
+                                        ${log.link ? `
+                                            <a href="${log.link}" target="_blank" class="text-xs text-zinc-500 hover:text-white flex items-center gap-1 group">
+                                                <span class="group-hover:translate-x-1 transition-transform tracking-widest">ACCESS_PROJECT_LINK &gt;&gt;</span>
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                    <p class="text-zinc-400 leading-relaxed font-light">
+                                        ${log.description || 'No data available.'}
+                                    </p>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `).join('');
             } else {
                 emptyState.classList.remove('hidden');
-                logCount.textContent = "0 ENTRIES FOUND";
+                logCount.textContent = "0 SESSIONS DISCOVERED";
             }
         }
 

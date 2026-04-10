@@ -81,25 +81,32 @@
             <div class="space-y-12">
                 <!-- Next Session Form -->
                 <section>
-                    <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_NEXT_SESSION_CONFIG
+                    <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_SESSION_SELECTOR</span>
+                        <select id="session-select" onchange="switchSession(this.value)" class="bg-[#0d0d0d] border border-zinc-700 text-[10px] p-1 rounded-sm text-zinc-300">
+                            <!-- Options injected here -->
+                        </select>
                     </h2>
-                    <div class="space-y-4">
+                    
+                    <div class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800 space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="text-[10px] text-zinc-500 uppercase">Session Date</label>
-                                <input type="text" id="next-date" placeholder="e.g. May 15, 2024" class="w-full p-3 rounded-sm text-sm">
+                                <input type="text" id="next-date" placeholder="e.g. May 15, 2024" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
                             </div>
                             <div class="space-y-1">
                                 <label class="text-[10px] text-zinc-500 uppercase">Local Time (NZST)</label>
-                                <input type="text" id="next-time" placeholder="e.g. 18:00 - 21:00" class="w-full p-3 rounded-sm text-sm">
+                                <input type="text" id="next-time" placeholder="e.g. 18:00 - 21:00" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
                             </div>
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] text-zinc-500 uppercase">Location / Link</label>
-                            <input type="text" id="next-location" placeholder="e.g. The Spaced Out Bar / Discord" class="w-full p-3 rounded-sm text-sm">
+                            <input type="text" id="next-location" placeholder="e.g. The Spaced Out Bar / Discord" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
                         </div>
-                        <button onclick="updateNextSession()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Update Session Banner</button>
+                        
+                        <div class="flex items-center gap-4 pt-4 border-t border-zinc-900">
+                             <button id="set-advertised-btn" onclick="setAsAdvertised()" class="btn-secondary flex-1 py-2 text-[10px] rounded-sm uppercase tracking-tighter">Set as Main Banner</button>
+                        </div>
                     </div>
                 </section>
 
@@ -161,13 +168,19 @@
                         </ol>
                     </div>
 
-                    <div id="sync-status" class="hidden p-3 bg-[#00ff41]/10 border border-[#00ff41]/30 text-[#00ff41] text-[10px] text-center rounded-sm animate-pulse">
+                    <div id="sync-status" class="hidden p-3 bg-[#ff00ff]/10 border border-[#ff00ff]/30 text-[#ff00ff] text-[10px] text-center rounded-sm animate-pulse">
                         CONTENT_COPIED_TO_CLIPBOARD // READY_FOR_SYNC
                     </div>
                     
-                    <button onclick="resetData()" class="text-[10px] text-red-500 uppercase hover:underline opacity-50 hover:opacity-100 transition-opacity">
-                        [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
-                    </button>
+                    <div class="pt-12 border-t border-zinc-900">
+                        <h3 class="text-[10px] text-zinc-500 uppercase tracking-widest mb-4">Master Session Uplink</h3>
+                        <div class="space-y-3">
+                            <button onclick="createNewSession()" class="btn-secondary w-full py-2 text-xs rounded-sm uppercase tracking-tighter hover:border-[#ff00ff] hover:text-[#ff00ff]">Initialize New Session</button>
+                            <button onclick="resetData()" class="text-[10px] text-red-500 uppercase hover:underline opacity-50 hover:opacity-100 transition-opacity w-full text-center">
+                                [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -175,21 +188,22 @@
 
     <script>
         let currentState = {
-            next_session: { date: "", time: "", location: "" },
-            logs: []
+            active_session_id: "session_1",
+            advertised_session_id: "session_1",
+            sessions: [
+                { id: "session_1", date: "TBD", time: "TBD", location: "TBD", logs: [] }
+            ]
         };
 
         // Load Initial Data
         async function init() {
-            // Try localStorage first
-            const cached = localStorage.getItem('vibe_pub_draft');
+            const cached = localStorage.getItem('vibe_pub_draft_v2');
             if (cached) {
                 currentState = JSON.parse(cached);
                 renderAll();
                 return;
             }
 
-            // Otherwise fetch from data.json
             try {
                 const response = await fetch('../data.json');
                 const data = await response.json();
@@ -203,7 +217,7 @@
         }
 
         function saveDraft() {
-            localStorage.setItem('vibe_pub_draft', JSON.stringify(currentState));
+            localStorage.setItem('vibe_pub_draft_v2', JSON.stringify(currentState));
             updatePreview();
             syncToDisk();
         }
@@ -252,10 +266,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(currentState)
                 });
-                console.log('Synced to local disk.');
             } catch (e) {
-                console.error('Sync to disk failed.');
-                checkBridge(); // Recheck status
+                console.error('Sync failed.');
+                checkBridge();
             }
         }
 
@@ -264,23 +277,73 @@
         }
 
         function renderAll() {
-            // Update Banner Fields
-            document.getElementById('next-date').value = currentState.next_session.date || "";
-            document.getElementById('next-time').value = currentState.next_session.time || "";
-            document.getElementById('next-location').value = currentState.next_session.location || "";
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            
+            // Render selector
+            const selector = document.getElementById('session-select');
+            selector.innerHTML = currentState.sessions.map(s => `
+                <option value="${s.id}" ${s.id === currentState.active_session_id ? 'selected' : ''}>
+                    ${s.date} (${s.id})
+                </option>
+            `).join('');
 
-            // Render Logs List
+            // Render Banner Status
+            const bannerBtn = document.getElementById('set-advertised-btn');
+            if (currentState.active_session_id === currentState.advertised_session_id) {
+                bannerBtn.textContent = "CURRENTLY_ADVERTISED";
+                bannerBtn.classList.add('border-[#ff00ff]', 'text-[#ff00ff]');
+                bannerBtn.disabled = true;
+            } else {
+                bannerBtn.textContent = "SET AS MAIN BANNER";
+                bannerBtn.classList.remove('border-[#ff00ff]', 'text-[#ff00ff]');
+                bannerBtn.disabled = false;
+            }
+
+            if (currentSession) {
+                document.getElementById('next-date').value = currentSession.date || "";
+                document.getElementById('next-time').value = currentSession.time || "";
+                document.getElementById('next-location').value = currentSession.location || "";
+            }
+
             renderLogsList();
             updatePreview();
         }
 
-        function updateNextSession() {
-            currentState.next_session = {
-                date: document.getElementById('next-date').value,
-                time: document.getElementById('next-time').value,
-                location: document.getElementById('next-location').value
-            };
+        function switchSession(id) {
+            currentState.active_session_id = id;
+            renderAll();
             saveDraft();
+        }
+
+        function updateCurrentSessionMeta() {
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            if (currentSession) {
+                currentSession.date = document.getElementById('next-date').value;
+                currentSession.time = document.getElementById('next-time').value;
+                currentSession.location = document.getElementById('next-location').value;
+                saveDraft();
+            }
+        }
+
+        function setAsAdvertised() {
+            currentState.advertised_session_id = currentState.active_session_id;
+            saveDraft();
+            renderAll();
+        }
+
+        function createNewSession() {
+            const id = `session_${Date.now()}`;
+            currentState.sessions.unshift({
+                id: id,
+                date: "NEW_SESSION",
+                time: "TBD",
+                location: "TBD",
+                logs: []
+            });
+            currentState.active_session_id = id;
+            currentState.advertised_session_id = id;
+            saveDraft();
+            renderAll();
         }
 
         function addLogEntry() {
@@ -289,27 +352,30 @@
             const desc = document.getElementById('log-desc').value;
 
             if (!name || !desc) {
-                alert("Missing required fields: Name and Description.");
+                alert("Missing required fields.");
                 return;
             }
 
-            currentState.logs.unshift({ name, description: desc, link });
-            
-            // Clear fields
-            document.getElementById('log-name').value = "";
-            document.getElementById('log-link').value = "";
-            document.getElementById('log-desc').value = "";
-            
-            saveDraft();
-            renderLogsList();
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            if (currentSession) {
+                currentSession.logs.unshift({ name, description: desc, link });
+                document.getElementById('log-name').value = "";
+                document.getElementById('log-link').value = "";
+                document.getElementById('log-desc').value = "";
+                saveDraft();
+                renderLogsList();
+            }
         }
 
         function renderLogsList() {
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
             const container = document.getElementById('active-logs-list');
             const count = document.getElementById('active-log-count');
-            count.textContent = currentState.logs.length;
+            
+            if (!currentSession) return;
+            count.textContent = currentSession.logs.length;
 
-            container.innerHTML = currentState.logs.map((log, index) => `
+            container.innerHTML = currentSession.logs.map((log, index) => `
                 <div class="p-4 bg-[#111] border border-zinc-900 rounded-sm flex justify-between items-start group">
                     <div class="overflow-hidden">
                         <div class="text-xs font-bold text-[#00ffff] truncate">${log.name}</div>
@@ -323,8 +389,9 @@
         }
 
         function deleteLog(index) {
-            if (confirm("Delete this log entry?")) {
-                currentState.logs.splice(index, 1);
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            if (currentSession && confirm("Delete log?")) {
+                currentSession.logs.splice(index, 1);
                 saveDraft();
                 renderLogsList();
             }
@@ -341,14 +408,14 @@
 
         function resetData() {
             if (confirm("THIS WILL ERASE ALL LOCAL DRAFT DATA. PROCEED?")) {
-                localStorage.removeItem('vibe_pub_draft');
+                localStorage.removeItem('vibe_pub_draft_v2');
                 location.reload();
             }
         }
 
         init();
         checkBridge();
-        setInterval(checkBridge, 5000); // Polling status
+        setInterval(checkBridge, 5000);
     </script>
 </body>
 </html>
