@@ -83,7 +83,7 @@
             align-items: center;
             border-right: 2px solid var(--border-muted);
             position: relative;
-            align-self: flex-start; /* Ensure it only stretches to its internal content if needed, though grid handles this better */
+            align-self: start; /* Fix: correctly stop at content height */
         }
         .session-sidebar::before, .session-sidebar::after {
             content: '';
@@ -105,8 +105,8 @@
             font-size: 10px;
             color: #555;
             display: flex;
-            justify-content: space-between;
-            height: 100%;
+            flex-direction: column;
+            gap: 2rem;
             padding: 2rem 0;
         }
         .vertical-metadata b { color: var(--accent-cyan); }
