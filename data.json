@@ -1,1 +1,24 @@
-{"next_session":{"date":"TBC","time":"1500-1800","location":"Chapman Taylor"},"logs":[{"name":"Grokbeer","description":"Worked on the \"Welly BYO\" app, a tool to give you the closests bottle store to your BYO restaurant of choice.","link":"https://welly-byo--grokbeer.replit.app/"},{"name":"TinyPirate","description":"Built out this website!","link":"https://github.com/Wayfinder-Intel/dev-pub"}]}
+{
+  "active_session_id": "session_1",
+  "advertised_session_id": "session_1",
+  "sessions": [
+    {
+      "id": "session_1",
+      "date": "TBC",
+      "time": "1500-1800",
+      "location": "Chapman Taylor",
+      "logs": [
+        {
+          "name": "Grokbeer",
+          "description": "Worked on the \"Welly BYO\" app, a tool to give you the closests bottle store to your BYO restaurant of choice.",
+          "link": "https://welly-byo--grokbeer.replit.app/"
+        },
+        {
+          "name": "TinyPirate",
+          "description": "Built out this website!",
+          "link": "https://github.com/Wayfinder-Intel/dev-pub"
+        }
+      ]
+    }
+  ]
+}
