@@ -79,38 +79,20 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Left: Forms -->
             <div class="space-y-12">
-                <!-- Next Session Form -->
+                <!-- Session Config (Moved & Streamlined) -->
                 <section>
                     <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center justify-between">
                         <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_SESSION_SELECTOR</span>
-                        <select id="session-select" onchange="switchSession(this.value)" class="bg-[#0d0d0d] border border-zinc-700 text-[10px] p-1 rounded-sm text-zinc-300">
+                        <select id="session-select" onchange="switchSession(this.value)" class="bg-[#0d0d0d] border border-zinc-700 text-[10px] p-1 rounded-sm text-zinc-300 focus:border-[#ff00ff] outline-none">
                             <!-- Options injected here -->
                         </select>
                     </h2>
                     
-                    <div class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-zinc-500 uppercase">Session Date</label>
-                                <input type="text" id="next-date" placeholder="e.g. May 15, 2024" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-zinc-500 uppercase">Local Time (NZST)</label>
-                                <input type="text" id="next-time" placeholder="e.g. 18:00 - 21:00" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-zinc-500 uppercase">Location / Link</label>
-                            <input type="text" id="next-location" placeholder="e.g. The Spaced Out Bar / Discord" class="w-full p-3 rounded-sm text-sm" oninput="updateCurrentSessionMeta()">
-                        </div>
-                        
-                        <div class="flex items-center gap-4 pt-4 border-t border-zinc-900">
-                             <button id="set-advertised-btn" onclick="setAsAdvertised()" class="btn-secondary flex-1 py-2 text-[10px] rounded-sm uppercase tracking-tighter">Set as Main Banner</button>
-                        </div>
+                    <div id="session-meta-display" class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800 space-y-4">
+                        <!-- Metadata with Edit buttons injected here -->
                     </div>
                 </section>
 
-                <!-- Add Log Entry -->
                 <section>
                     <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold mb-6 flex items-center gap-2">
                         <span class="w-2 h-2 bg-[#00ff41] rounded-full"></span> 02_ADD_LOG_ENTRY
@@ -122,64 +104,45 @@
                                 <input type="text" id="log-name" placeholder="Handle / Name" class="w-full p-3 rounded-sm text-sm">
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] text-zinc-500 uppercase">Project Link (Optional)</label>
+                                <label class="text-[10px] text-zinc-500 uppercase">Project Link</label>
                                 <input type="text" id="log-link" placeholder="https://github.com/..." class="w-full p-3 rounded-sm text-sm">
                             </div>
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] text-zinc-500 uppercase">Task Description</label>
-                            <textarea id="log-desc" rows="4" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
+                            <textarea id="log-desc" rows="3" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
                         </div>
                         <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Session Log</button>
                     </div>
                 </section>
 
-                <!-- Current Logs List -->
-                <section>
-                    <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-6">
-                        03_ACTIVE_LOGS (<span id="active-log-count">0</span>)
-                    </h2>
-                    <div id="active-logs-list" class="space-y-3">
-                        <!-- Items injected here -->
+                <section class="pt-8 border-t border-zinc-900">
+                    <div class="flex flex-col gap-3">
+                        <button onclick="createNewSession()" class="btn-secondary w-full py-3 text-xs rounded-sm uppercase tracking-tighter hover:border-[#ff00ff] hover:text-[#ff00ff] transition-all">Initialize New Session</button>
+                        <button onclick="resetData()" class="text-[9px] text-red-500 uppercase hover:underline opacity-30 hover:opacity-100 transition-opacity w-full text-center">
+                            [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
+                        </button>
                     </div>
                 </section>
             </div>
 
-            <!-- Right: Preview & Sync -->
+            <!-- Right: Management Interface -->
             <div class="relative">
                 <div class="sticky top-12 space-y-6">
                     <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold flex items-center justify-between">
-                        <span>DATA_OUT_STREAM</span>
-                        <span class="text-zinc-600 font-normal">data.json</span>
-                    </h2>
-                    <div class="relative group">
-                        <pre id="json-preview" class="p-6 text-xs text-zinc-400 overflow-auto max-h-[70vh] rounded-sm"></pre>
-                        <button onclick="copyAndSync()" class="absolute top-4 right-4 bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1 rounded-sm text-[10px] uppercase transition-colors">
-                            Copy JSON for Sync
-                        </button>
-                    </div>
-                    
-                    <div class="p-6 bg-blue-900/10 border border-blue-900/30 rounded-sm">
-                        <h4 class="text-xs font-bold text-blue-400 mb-2 uppercase italic">Sync Instructions:</h4>
-                        <ol class="text-[11px] text-blue-300/70 list-decimal ml-4 space-y-2">
-                            <li>Check the preview for correctness.</li>
-                            <li>Click "Copy JSON for Sync".</li>
-                            <li>Tell Antigravity: "Update vibe.pub data.json with this content: [Paste Here]".</li>
-                        </ol>
-                    </div>
-
-                    <div id="sync-status" class="hidden p-3 bg-[#ff00ff]/10 border border-[#ff00ff]/30 text-[#ff00ff] text-[10px] text-center rounded-sm animate-pulse">
-                        CONTENT_COPIED_TO_CLIPBOARD // READY_FOR_SYNC
-                    </div>
-                    
-                    <div class="pt-12 border-t border-zinc-900">
-                        <h3 class="text-[10px] text-zinc-500 uppercase tracking-widest mb-4">Master Session Uplink</h3>
-                        <div class="space-y-3">
-                            <button onclick="createNewSession()" class="btn-secondary w-full py-2 text-xs rounded-sm uppercase tracking-tighter hover:border-[#ff00ff] hover:text-[#ff00ff]">Initialize New Session</button>
-                            <button onclick="resetData()" class="text-[10px] text-red-500 uppercase hover:underline opacity-50 hover:opacity-100 transition-opacity w-full text-center">
-                                [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
-                            </button>
+                        <span>03_LIVE_SESSION_EXPLORER</span>
+                        <div id="sync-status-indicator" class="flex items-center gap-2 text-[9px] text-[#ff00ff] opacity-0 transition-opacity duration-1000">
+                            <span class="w-1.5 h-1.5 bg-[#ff00ff] rounded-full animate-ping"></span>
+                            SYNCING_TO_DISK...
                         </div>
+                    </h2>
+                    
+                    <div id="management-container" class="space-y-4">
+                        <!-- Detailed Log management list injected here -->
+                    </div>
+                    
+                    <div id="empty-management-state" class="hidden p-12 text-center border border-dashed border-zinc-800 rounded-sm">
+                        <p class="text-xs text-zinc-600 uppercase tracking-widest">No telemetry data found for this session</p>
                     </div>
                 </div>
             </div>
@@ -218,7 +181,6 @@
 
         function saveDraft() {
             localStorage.setItem('vibe_pub_draft_v2', JSON.stringify(currentState));
-            updatePreview();
             syncToDisk();
         }
 
@@ -260,53 +222,125 @@
 
         async function syncToDisk() {
             if (!bridgeOnline) return;
+            const statusIndicator = document.getElementById('sync-status-indicator');
+            statusIndicator.style.opacity = '1';
+            
             try {
                 await fetch(`${BRIDGE_URL}/sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(currentState)
                 });
+                setTimeout(() => { statusIndicator.style.opacity = '0'; }, 1000);
             } catch (e) {
                 console.error('Sync failed.');
                 checkBridge();
             }
         }
 
-        function updatePreview() {
-            document.getElementById('json-preview').textContent = JSON.stringify(currentState, null, 2);
-        }
-
         function renderAll() {
             const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            
+            if (!currentSession) return;
+
             // Render selector
             const selector = document.getElementById('session-select');
             selector.innerHTML = currentState.sessions.map(s => `
                 <option value="${s.id}" ${s.id === currentState.active_session_id ? 'selected' : ''}>
-                    ${s.date} (${s.id})
+                    ${s.date}
                 </option>
             `).join('');
 
-            // Render Banner Status
-            const bannerBtn = document.getElementById('set-advertised-btn');
-            if (currentState.active_session_id === currentState.advertised_session_id) {
-                bannerBtn.textContent = "CURRENTLY_ADVERTISED";
-                bannerBtn.classList.add('border-[#ff00ff]', 'text-[#ff00ff]');
-                bannerBtn.disabled = true;
-            } else {
-                bannerBtn.textContent = "SET AS MAIN BANNER";
-                bannerBtn.classList.remove('border-[#ff00ff]', 'text-[#ff00ff]');
-                bannerBtn.disabled = false;
-            }
-
-            if (currentSession) {
-                document.getElementById('next-date').value = currentSession.date || "";
-                document.getElementById('next-time').value = currentSession.time || "";
-                document.getElementById('next-location').value = currentSession.location || "";
-            }
+            // Render Meta Display
+            const metaContainer = document.getElementById('session-meta-display');
+            const isAdvertised = currentState.active_session_id === currentState.advertised_session_id;
+            
+            metaContainer.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start gap-4 p-3 bg-[#080808] border border-zinc-900 rounded-sm">
+                        <div class="flex-1 space-y-4">
+                            <div>
+                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Session Date</label>
+                                <div class="text-sm text-white">${currentSession.date}</div>
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Time Window</label>
+                                <div class="text-sm text-zinc-400 font-mono">${currentSession.time}</div>
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Location</label>
+                                <div class="text-sm text-zinc-400">${currentSession.location}</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 min-w-[120px]">
+                            <button onclick="editSessionMeta()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-zinc-500 hover:border-[#00ffff] hover:text-[#00ffff] transition-all">Edit Metadata</button>
+                            <button onclick="setAsAdvertised()" ${isAdvertised ? 'disabled' : ''} class="text-[9px] uppercase px-3 py-2 border ${isAdvertised ? 'border-[#ff00ff] text-[#ff00ff]' : 'border-zinc-800 text-zinc-500 hover:border-white hover:text-white'} transition-all">
+                                ${isAdvertised ? 'Now Advertised' : 'Set as Banner'}
+                            </button>
+                            ${currentState.sessions.length > 1 ? `<button onclick="deleteSession()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-red-900/40 hover:text-red-500 transition-all">Delete Session</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
 
             renderLogsList();
-            updatePreview();
+        }
+
+        function renderLogsList() {
+            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const container = document.getElementById('management-container');
+            const emptyState = document.getElementById('empty-management-state');
+            
+            if (!currentSession || currentSession.logs.length === 0) {
+                container.innerHTML = "";
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = currentSession.logs.map((log, index) => `
+                <div class="p-6 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-700 transition-colors group">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-[#00ffff] mb-1">${log.name}</div>
+                            <div class="text-[11px] text-zinc-400 leading-relaxed mb-3">${log.description}</div>
+                            ${log.link ? `<div class="text-[9px] text-zinc-600 font-mono underline opacity-50 group-hover:opacity-100">${log.link}</div>` : ''}
+                        </div>
+                        <div class="flex gap-4 ml-4">
+                            <button onclick="editLog(${index})" class="text-[10px] text-zinc-600 hover:text-white uppercase transition-colors">Edit</button>
+                            <button onclick="deleteLog(${index})" class="text-[10px] text-red-900/50 hover:text-red-500 uppercase transition-colors">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editSessionMeta() {
+            const s = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const date = prompt("Session Date:", s.date);
+            const time = prompt("Time Window:", s.time);
+            const loc = prompt("Location:", s.location);
+            
+            if (date !== null) s.date = date;
+            if (time !== null) s.time = time;
+            if (loc !== null) s.location = loc;
+            
+            saveDraft();
+            renderAll();
+        }
+
+        function editLog(index) {
+            const s = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const log = s.logs[index];
+            const name = prompt("Name:", log.name);
+            const desc = prompt("Description:", log.description);
+            const link = prompt("Link:", log.link);
+            
+            if (name !== null) log.name = name;
+            if (desc !== null) log.description = desc;
+            if (link !== null) log.link = link;
+            
+            saveDraft();
+            renderLogsList();
         }
 
         function switchSession(id) {
@@ -315,20 +349,20 @@
             saveDraft();
         }
 
-        function updateCurrentSessionMeta() {
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            if (currentSession) {
-                currentSession.date = document.getElementById('next-date').value;
-                currentSession.time = document.getElementById('next-time').value;
-                currentSession.location = document.getElementById('next-location').value;
-                saveDraft();
-            }
-        }
-
         function setAsAdvertised() {
             currentState.advertised_session_id = currentState.active_session_id;
             saveDraft();
             renderAll();
+        }
+
+        function deleteSession() {
+            if (confirm("Permanently delete this entire session and all its logs?")) {
+                const idx = currentState.sessions.findIndex(s => s.id === currentState.active_session_id);
+                currentState.sessions.splice(idx, 1);
+                currentState.active_session_id = currentState.sessions[0].id;
+                saveDraft();
+                renderAll();
+            }
         }
 
         function createNewSession() {
@@ -363,29 +397,8 @@
                 document.getElementById('log-link').value = "";
                 document.getElementById('log-desc').value = "";
                 saveDraft();
-                renderLogsList();
+                renderAll();
             }
-        }
-
-        function renderLogsList() {
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            const container = document.getElementById('active-logs-list');
-            const count = document.getElementById('active-log-count');
-            
-            if (!currentSession) return;
-            count.textContent = currentSession.logs.length;
-
-            container.innerHTML = currentSession.logs.map((log, index) => `
-                <div class="p-4 bg-[#111] border border-zinc-900 rounded-sm flex justify-between items-start group">
-                    <div class="overflow-hidden">
-                        <div class="text-xs font-bold text-[#00ffff] truncate">${log.name}</div>
-                        <div class="text-[10px] text-zinc-500 truncate mb-1">${log.description.substring(0, 60)}...</div>
-                    </div>
-                    <button onclick="deleteLog(${index})" class="text-zinc-700 hover:text-red-500 transition-colors text-xs p-1">
-                        &times;
-                    </button>
-                </div>
-            `).join('');
         }
 
         function deleteLog(index) {
@@ -397,17 +410,8 @@
             }
         }
 
-        function copyAndSync() {
-            const json = JSON.stringify(currentState, null, 2);
-            navigator.clipboard.writeText(json).then(() => {
-                const status = document.getElementById('sync-status');
-                status.classList.remove('hidden');
-                setTimeout(() => status.classList.add('hidden'), 5000);
-            });
-        }
-
         function resetData() {
-            if (confirm("THIS WILL ERASE ALL LOCAL DRAFT DATA. PROCEED?")) {
+            if (confirm("ERASE LOCAL CACHE AND RE-SYNC FROM DISK?")) {
                 localStorage.removeItem('vibe_pub_draft_v2');
                 location.reload();
             }
