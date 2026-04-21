@@ -70,6 +70,60 @@
             100% { transform: translate(0); }
         }
 
+        .hero-glitch {
+            position: relative;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #fff;
+            display: inline-block;
+        }
+        .hero-glitch::before, .hero-glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip: rect(0, 0, 0, 0);
+        }
+        .hero-glitch::before {
+            left: 3px;
+            text-shadow: -2px 0 var(--accent-magenta);
+            animation: hero-glitch-1 2.5s infinite linear alternate-reverse;
+        }
+        .hero-glitch::after {
+            left: -3px;
+            text-shadow: 2px 0 var(--accent-cyan);
+            animation: hero-glitch-2 2s infinite linear alternate-reverse;
+        }
+        @keyframes hero-glitch-1 {
+            0% { clip: rect(10px, 9999px, 15px, 0); transform: skew(0.5deg); }
+            10% { clip: rect(40px, 9999px, 45px, 0); transform: skew(0.8deg); }
+            20% { clip: rect(20px, 9999px, 30px, 0); transform: skew(0.3deg); }
+            30% { clip: rect(60px, 9999px, 65px, 0); transform: skew(0.5deg); }
+            40% { clip: rect(10px, 9999px, 50px, 0); transform: skew(0.1deg); }
+            50% { clip: rect(80px, 9999px, 85px, 0); transform: skew(0.6deg); }
+            60% { clip: rect(30px, 9999px, 40px, 0); transform: skew(0.4deg); }
+            70% { clip: rect(70px, 9999px, 75px, 0); transform: skew(0.9deg); }
+            80% { clip: rect(50px, 9999px, 55px, 0); transform: skew(0.2deg); }
+            90% { clip: rect(20px, 9999px, 25px, 0); transform: skew(0.7deg); }
+            100% { clip: rect(90px, 9999px, 95px, 0); transform: skew(0.5deg); }
+        }
+        @keyframes hero-glitch-2 {
+            0% { clip: rect(40px, 9999px, 45px, 0); transform: skew(-0.5deg); }
+            10% { clip: rect(10px, 9999px, 15px, 0); transform: skew(-0.8deg); }
+            20% { clip: rect(60px, 9999px, 65px, 0); transform: skew(-0.3deg); }
+            30% { clip: rect(20px, 9999px, 30px, 0); transform: skew(-0.5deg); }
+            40% { clip: rect(80px, 9999px, 85px, 0); transform: skew(-0.1deg); }
+            50% { clip: rect(10px, 9999px, 50px, 0); transform: skew(-0.6deg); }
+            60% { clip: rect(70px, 9999px, 75px, 0); transform: skew(-0.4deg); }
+            70% { clip: rect(30px, 9999px, 40px, 0); transform: skew(-0.9deg); }
+            80% { clip: rect(20px, 9999px, 25px, 0); transform: skew(-0.2deg); }
+            90% { clip: rect(50px, 9999px, 55px, 0); transform: skew(-0.7deg); }
+            100% { clip: rect(10px, 9999px, 20px, 0); transform: skew(-0.5deg); }
+        }
+
         /* Session Vertical UI */
         .session-container {
             display: grid;
@@ -117,11 +171,16 @@
 
     <div class="max-w-4xl mx-auto px-6 py-12 md:py-24">
         <!-- Hero Section -->
-        <header class="mb-20 text-center md:text-left">
-            <div class="inline-block mb-8">
-                <img src="assets/vibe-pub-logo.png" alt="vibe.pub logo" class="h-32 md:h-48 w-auto mx-auto md:mx-0 drop-shadow-[0_0_15px_rgba(255,0,255,0.4)]">
+        <header class="mb-20 text-center">
+            <div class="inline-block mb-12">
+                <img src="assets/vibe-pub-logo.png" alt="vibe.pub logo" class="h-32 md:h-48 w-auto mx-auto drop-shadow-[0_0_15px_rgba(255,0,255,0.4)]">
             </div>
-            <p class="text-lg md:text-xl text-zinc-500 leading-relaxed max-w-2xl">
+            <div class="mb-8">
+                <h2 class="hero-glitch text-sm sm:text-lg md:text-2xl tracking-[0.1em] whitespace-nowrap opacity-90" data-text="Prompt * Ship * Abandon * Repeat">
+                    Prompt * Ship * Abandon * Repeat
+                </h2>
+            </div>
+            <p class="text-sm md:text-base text-zinc-500 leading-relaxed max-w-xl mx-auto uppercase tracking-widest opacity-80">
                 A monthly session where developers and enthusiasts build projects live using AI. Low friction, high output. <span class="text-[#ff00ff] cursor-blink">_</span>
             </p>
         </header>
@@ -138,7 +197,7 @@
                         <div class="text-3xl font-bold text-white tracking-tight">
                             <span id="session-date">Loading...</span>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-zinc-400">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg md:text-xl text-zinc-400">
                             <div class="flex items-center gap-2">
                                 <span class="text-[#00ffff]">[ TIME ]</span>
                                 <span id="session-time">...</span>
