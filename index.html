@@ -263,40 +263,34 @@
         }
 
         function renderPage(data) {
-            // Render "Advertised" Session Banner
-            const advertised = data.sessions.find(s => s.id === data.advertised_session_id);
-            if (advertised) {
-                document.getElementById('session-date').textContent = advertised.date || 'TBD';
-                document.getElementById('session-time').textContent = advertised.time || 'TBD';
-                document.getElementById('session-location').textContent = advertised.location || 'TBD';
+            // Render "Next Session" Banner
+            const next = data.next_session;
+            if (next) {
+                document.getElementById('session-date').textContent = next.date || 'TBD';
+                document.getElementById('session-time').textContent = next.time || 'TBD';
+                document.getElementById('session-location').textContent = next.location || 'TBD';
             }
 
-            // Render Grouped Sessions
+            // Render Logs
             const masterContainer = document.getElementById('sessions-master-container');
             const emptyState = document.getElementById('empty-state');
             const logCount = document.getElementById('log-count');
 
-            // Find sessions with logs (or all sessions?)
-            const sessionsWithLogs = data.sessions.filter(s => s.logs && s.logs.length > 0);
+            const logs = data.logs || [];
 
-            if (sessionsWithLogs.length > 0) {
+            if (logs.length > 0) {
                 emptyState.classList.add('hidden');
-                logCount.textContent = `${sessionsWithLogs.length} SESSIONS DISCOVERED`;
+                logCount.textContent = `${logs.length} ENTRIES DISCOVERED`;
                 
-                masterContainer.innerHTML = sessionsWithLogs.map(session => `
+                masterContainer.innerHTML = `
                     <div class="session-container group">
-                        <!-- Sidebar / Bracket -->
-                        <div class="session-sidebar border-zinc-800 group-hover:border-[var(--accent-magenta)] transition-colors">
+                        <div class="session-sidebar border-zinc-800">
                             <div class="vertical-metadata font-mono">
-                                <span><b>LOC</b> ${session.location || 'UNKNOWN'}</span>
-                                <span><b>DATE</b> ${session.date || 'UNKNOWN'}</span>
-                                <span><b>TIME</b> ${session.time || 'UNKNOWN'}</span>
+                                <span><b>ARCHIVE</b> LOGS</span>
                             </div>
                         </div>
-
-                        <!-- Logs Grid -->
                         <div class="space-y-6">
-                            ${session.logs.map(log => `
+                            ${logs.map(log => `
                                 <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#ff00ff] transition-all">
                                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                                         <h3 class="text-lg font-bold text-[#00ffff]">${log.name || 'Anonymous'}</h3>
@@ -313,10 +307,11 @@
                             `).join('')}
                         </div>
                     </div>
-                `).join('');
+                `;
             } else {
                 emptyState.classList.remove('hidden');
-                logCount.textContent = "0 SESSIONS DISCOVERED";
+                logCount.textContent = "0 ENTRIES DISCOVERED";
+                masterContainer.innerHTML = '';
             }
         }
 

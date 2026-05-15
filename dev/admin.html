@@ -79,13 +79,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Left: Forms -->
             <div class="space-y-12">
-                <!-- Session Config (Moved & Streamlined) -->
+                <!-- Session Config (Simplified) -->
                 <section>
                     <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center justify-between">
-                        <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_SESSION_SELECTOR</span>
-                        <select id="session-select" onchange="switchSession(this.value)" class="bg-[#0d0d0d] border border-zinc-700 text-[10px] p-1 rounded-sm text-zinc-300 focus:border-[#ff00ff] outline-none">
-                            <!-- Options injected here -->
-                        </select>
+                        <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_NEXT_SESSION_CONFIG</span>
                     </h2>
                     
                     <div id="session-meta-display" class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800 space-y-4">
@@ -112,13 +109,12 @@
                             <label class="text-[10px] text-zinc-500 uppercase">Task Description</label>
                             <textarea id="log-desc" rows="3" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
                         </div>
-                        <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Session Log</button>
+                        <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Logs</button>
                     </div>
                 </section>
 
                 <section class="pt-8 border-t border-zinc-900">
                     <div class="flex flex-col gap-3">
-                        <button onclick="createNewSession()" class="btn-secondary w-full py-3 text-xs rounded-sm uppercase tracking-tighter hover:border-[#ff00ff] hover:text-[#ff00ff] transition-all">Initialize New Session</button>
                         <button onclick="resetData()" class="text-[9px] text-red-500 uppercase hover:underline opacity-30 hover:opacity-100 transition-opacity w-full text-center">
                             [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
                         </button>
@@ -151,11 +147,8 @@
 
     <script>
         let currentState = {
-            active_session_id: "session_1",
-            advertised_session_id: "session_1",
-            sessions: [
-                { id: "session_1", date: "TBD", time: "TBD", location: "TBD", logs: [] }
-            ]
+            next_session: { date: "TBD", time: "TBD", location: "TBD" },
+            logs: []
         };
 
         // Load Initial Data
@@ -239,20 +232,9 @@
         }
 
         function renderAll() {
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            if (!currentSession) return;
-
-            // Render selector
-            const selector = document.getElementById('session-select');
-            selector.innerHTML = currentState.sessions.map(s => `
-                <option value="${s.id}" ${s.id === currentState.active_session_id ? 'selected' : ''}>
-                    ${s.date}
-                </option>
-            `).join('');
-
             // Render Meta Display
             const metaContainer = document.getElementById('session-meta-display');
-            const isAdvertised = currentState.active_session_id === currentState.advertised_session_id;
+            const next = currentState.next_session || { date: 'TBD', time: 'TBD', location: 'TBD' };
             
             metaContainer.innerHTML = `
                 <div class="space-y-4">
@@ -260,23 +242,19 @@
                         <div class="flex-1 space-y-4">
                             <div>
                                 <label class="text-[9px] text-zinc-600 uppercase font-bold">Session Date</label>
-                                <div class="text-sm text-white">${currentSession.date}</div>
+                                <div class="text-sm text-white">${next.date}</div>
                             </div>
                             <div>
                                 <label class="text-[9px] text-zinc-600 uppercase font-bold">Time Window</label>
-                                <div class="text-sm text-zinc-400 font-mono">${currentSession.time}</div>
+                                <div class="text-sm text-zinc-400 font-mono">${next.time}</div>
                             </div>
                             <div>
                                 <label class="text-[9px] text-zinc-600 uppercase font-bold">Location</label>
-                                <div class="text-sm text-zinc-400">${currentSession.location}</div>
+                                <div class="text-sm text-zinc-400">${next.location}</div>
                             </div>
                         </div>
                         <div class="flex flex-col gap-2 min-w-[120px]">
                             <button onclick="editSessionMeta()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-zinc-500 hover:border-[#00ffff] hover:text-[#00ffff] transition-all">Edit Metadata</button>
-                            <button onclick="setAsAdvertised()" ${isAdvertised ? 'disabled' : ''} class="text-[9px] uppercase px-3 py-2 border ${isAdvertised ? 'border-[#ff00ff] text-[#ff00ff]' : 'border-zinc-800 text-zinc-500 hover:border-white hover:text-white'} transition-all">
-                                ${isAdvertised ? 'Now Advertised' : 'Set as Banner'}
-                            </button>
-                            ${currentState.sessions.length > 1 ? `<button onclick="deleteSession()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-red-900/40 hover:text-red-500 transition-all">Delete Session</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -286,18 +264,17 @@
         }
 
         function renderLogsList() {
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
             const container = document.getElementById('management-container');
             const emptyState = document.getElementById('empty-management-state');
             
-            if (!currentSession || currentSession.logs.length === 0) {
+            if (!currentState.logs || currentState.logs.length === 0) {
                 container.innerHTML = "";
                 emptyState.classList.remove('hidden');
                 return;
             }
             emptyState.classList.add('hidden');
 
-            container.innerHTML = currentSession.logs.map((log, index) => `
+            container.innerHTML = currentState.logs.map((log, index) => `
                 <div class="p-6 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-700 transition-colors group">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
@@ -315,7 +292,7 @@
         }
 
         function editSessionMeta() {
-            const s = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const s = currentState.next_session;
             const date = prompt("Session Date:", s.date);
             const time = prompt("Time Window:", s.time);
             const loc = prompt("Location:", s.location);
@@ -329,8 +306,7 @@
         }
 
         function editLog(index) {
-            const s = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            const log = s.logs[index];
+            const log = currentState.logs[index];
             const name = prompt("Name:", log.name);
             const desc = prompt("Description:", log.description);
             const link = prompt("Link:", log.link);
@@ -343,43 +319,6 @@
             renderLogsList();
         }
 
-        function switchSession(id) {
-            currentState.active_session_id = id;
-            renderAll();
-            saveDraft();
-        }
-
-        function setAsAdvertised() {
-            currentState.advertised_session_id = currentState.active_session_id;
-            saveDraft();
-            renderAll();
-        }
-
-        function deleteSession() {
-            if (confirm("Permanently delete this entire session and all its logs?")) {
-                const idx = currentState.sessions.findIndex(s => s.id === currentState.active_session_id);
-                currentState.sessions.splice(idx, 1);
-                currentState.active_session_id = currentState.sessions[0].id;
-                saveDraft();
-                renderAll();
-            }
-        }
-
-        function createNewSession() {
-            const id = `session_${Date.now()}`;
-            currentState.sessions.unshift({
-                id: id,
-                date: "NEW_SESSION",
-                time: "TBD",
-                location: "TBD",
-                logs: []
-            });
-            currentState.active_session_id = id;
-            currentState.advertised_session_id = id;
-            saveDraft();
-            renderAll();
-        }
-
         function addLogEntry() {
             const name = document.getElementById('log-name').value;
             const link = document.getElementById('log-link').value;
@@ -390,21 +329,17 @@
                 return;
             }
 
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            if (currentSession) {
-                currentSession.logs.unshift({ name, description: desc, link });
-                document.getElementById('log-name').value = "";
-                document.getElementById('log-link').value = "";
-                document.getElementById('log-desc').value = "";
-                saveDraft();
-                renderAll();
-            }
+            currentState.logs.unshift({ name, description: desc, link });
+            document.getElementById('log-name').value = "";
+            document.getElementById('log-link').value = "";
+            document.getElementById('log-desc').value = "";
+            saveDraft();
+            renderAll();
         }
 
         function deleteLog(index) {
-            const currentSession = currentState.sessions.find(s => s.id === currentState.active_session_id);
-            if (currentSession && confirm("Delete log?")) {
-                currentSession.logs.splice(index, 1);
+            if (confirm("Delete log?")) {
+                currentState.logs.splice(index, 1);
                 saveDraft();
                 renderLogsList();
             }
