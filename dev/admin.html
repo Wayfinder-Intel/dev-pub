@@ -42,10 +42,6 @@
             border-color: #555;
             color: #fff;
         }
-        pre {
-            background-color: #0d0d0d;
-            border: 1px solid #1a1a1a;
-        }
         .status-dot {
             width: 8px;
             height: 8px;
@@ -54,6 +50,32 @@
         }
         .status-online { background-color: #ff00ff; box-shadow: 0 0 8px #ff00ff; }
         .status-offline { background-color: #ff3e3e; }
+        
+        .session-tab {
+            padding: 1rem;
+            border: 1px solid #1a1a1a;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #080808;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .session-tab:hover {
+            border-color: #333;
+            background: #0d0d0d;
+        }
+        .session-tab.active {
+            border-color: #ff00ff;
+            background: #0d0d0d;
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(255,0,255,0.1);
+        }
+        .session-tab.advertised::after {
+            content: ' [LIVE]';
+            color: #ff00ff;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -76,84 +98,96 @@
             <a href="https://wayfinder-intel.github.io/dev-pub/" target="_blank" class="btn-secondary px-4 py-2 text-xs rounded-sm">VIEW_LIVE_SITE</a>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Left: Forms -->
-            <div class="space-y-12">
-                <!-- Session Config (Simplified) -->
-                <section>
-                    <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center justify-between">
-                        <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 01_NEXT_SESSION_CONFIG</span>
-                    </h2>
-                    
-                    <div id="session-meta-display" class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800 space-y-4">
-                        <!-- Metadata with Edit buttons injected here -->
-                    </div>
-                </section>
-
-                <section>
-                    <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold mb-6 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-[#00ff41] rounded-full"></span> 02_ADD_LOG_ENTRY
-                    </h2>
-                    <div class="space-y-4 p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-zinc-500 uppercase">Contributor Name</label>
-                                <input type="text" id="log-name" placeholder="Handle / Name" class="w-full p-3 rounded-sm text-sm">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-zinc-500 uppercase">Project Link</label>
-                                <input type="text" id="log-link" placeholder="https://github.com/..." class="w-full p-3 rounded-sm text-sm">
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-zinc-500 uppercase">Task Description</label>
-                            <textarea id="log-desc" rows="3" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
-                        </div>
-                        <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Logs</button>
-                    </div>
-                </section>
-
-                <section class="pt-8 border-t border-zinc-900">
-                    <div class="flex flex-col gap-3">
-                        <button onclick="resetData()" class="text-[9px] text-red-500 uppercase hover:underline opacity-30 hover:opacity-100 transition-opacity w-full text-center">
-                            [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
-                        </button>
-                    </div>
-                </section>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- Left: Session Management -->
+            <div class="space-y-6">
+                <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold flex items-center justify-between">
+                    <span>01_SESSION_SELECTOR</span>
+                    <button onclick="createNewSession()" class="text-[9px] bg-zinc-900 px-2 py-1 hover:bg-zinc-800 text-white border border-zinc-800">+ NEW</button>
+                </h2>
+                <div id="session-tabs" class="flex flex-col gap-2">
+                    <!-- Session tabs injected here -->
+                </div>
             </div>
 
-            <!-- Right: Management Interface -->
-            <div class="relative">
-                <div class="sticky top-12 space-y-6">
-                    <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold flex items-center justify-between">
-                        <span>03_LIVE_SESSION_EXPLORER</span>
-                        <div id="sync-status-indicator" class="flex items-center gap-2 text-[9px] text-[#ff00ff] opacity-0 transition-opacity duration-1000">
-                            <span class="w-1.5 h-1.5 bg-[#ff00ff] rounded-full animate-ping"></span>
-                            SYNCING_TO_DISK...
+            <!-- Middle: Active Session Details & Add Log -->
+            <div class="lg:col-span-2 space-y-12">
+                <section id="active-session-ui" class="space-y-12 hidden">
+                    <!-- Metadata -->
+                    <div>
+                        <h2 class="text-xs uppercase tracking-widest text-[#ff00ff] font-bold mb-6 flex items-center justify-between">
+                            <span class="flex items-center gap-2"><span class="w-2 h-2 bg-[#ff00ff] rounded-full"></span> 02_METADATA_CONFIG</span>
+                            <div class="flex gap-2">
+                                <button onclick="setAsAdvertised()" class="text-[9px] px-2 py-1 bg-[#ff00ff] text-white font-bold uppercase">Promote to Live</button>
+                                <button onclick="deleteSession()" class="text-[9px] px-2 py-1 bg-red-900/20 text-red-500 hover:bg-red-900/40 uppercase">Delete Session</button>
+                            </div>
+                        </h2>
+                        <div id="session-meta-display" class="p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800">
+                            <!-- Injected -->
                         </div>
-                    </h2>
-                    
-                    <div id="management-container" class="space-y-4">
-                        <!-- Detailed Log management list injected here -->
                     </div>
-                    
-                    <div id="empty-management-state" class="hidden p-12 text-center border border-dashed border-zinc-800 rounded-sm">
-                        <p class="text-xs text-zinc-600 uppercase tracking-widest">No telemetry data found for this session</p>
+
+                    <!-- Add Log -->
+                    <div>
+                        <h2 class="text-xs uppercase tracking-widest text-[#00ff41] font-bold mb-6 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-[#00ff41] rounded-full"></span> 03_ADD_LOG_ENTRY
+                        </h2>
+                        <div class="space-y-4 p-6 bg-[#0d0d0d] rounded-sm border border-zinc-800">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] text-zinc-500 uppercase">Contributor Name</label>
+                                    <input type="text" id="log-name" placeholder="Handle / Name" class="w-full p-3 rounded-sm text-sm">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] text-zinc-500 uppercase">Project Link</label>
+                                    <input type="text" id="log-link" placeholder="https://github.com/..." class="w-full p-3 rounded-sm text-sm">
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Task Description</label>
+                                <textarea id="log-desc" rows="3" placeholder="What was achieved?" class="w-full p-3 rounded-sm text-sm"></textarea>
+                            </div>
+                            <button onclick="addLogEntry()" class="btn-primary w-full py-3 text-sm rounded-sm uppercase tracking-tighter">Append to Session</button>
+                        </div>
                     </div>
+
+                    <!-- Log List -->
+                    <div>
+                        <h2 class="text-xs uppercase tracking-widest text-white font-bold mb-6 flex items-center justify-between">
+                            <span>04_TELEMETRY_LOGS</span>
+                            <div id="sync-status-indicator" class="flex items-center gap-2 text-[9px] text-[#ff00ff] opacity-0 transition-opacity duration-1000">
+                                <span class="w-1.5 h-1.5 bg-[#ff00ff] rounded-full animate-ping"></span>
+                                SYNCING_TO_DISK...
+                            </div>
+                        </h2>
+                        <div id="management-container" class="space-y-4">
+                            <!-- Logs -->
+                        </div>
+                    </div>
+                </section>
+
+                <div id="no-session-state" class="p-20 text-center border border-dashed border-zinc-800 text-zinc-600 uppercase text-xs tracking-widest">
+                    Select or Create a session to begin management
                 </div>
             </div>
         </div>
+        
+        <footer class="mt-20 pt-8 border-t border-zinc-900">
+            <button onclick="resetData()" class="text-[9px] text-red-500 uppercase hover:underline opacity-30 hover:opacity-100 transition-opacity w-full text-center">
+                [ DESTROY_LOCAL_CACHE_AND_REINITIALIZE ]
+            </button>
+        </footer>
     </div>
 
     <script>
         let currentState = {
-            next_session: { date: "TBD", time: "TBD", location: "TBD" },
-            logs: []
+            active_session_id: null,
+            advertised_session_id: null,
+            sessions: []
         };
 
-        // Load Initial Data
         async function init() {
-            const cached = localStorage.getItem('vibe_pub_draft_v2');
+            const cached = localStorage.getItem('vibe_pub_draft_v3');
             if (cached) {
                 currentState = JSON.parse(cached);
                 renderAll();
@@ -164,16 +198,14 @@
                 const response = await fetch('../data.json');
                 const data = await response.json();
                 currentState = data;
-                saveDraft();
                 renderAll();
             } catch (error) {
-                console.error('No existing session found.');
-                updatePreview();
+                console.error('No existing data found.');
             }
         }
 
         function saveDraft() {
-            localStorage.setItem('vibe_pub_draft_v2', JSON.stringify(currentState));
+            localStorage.setItem('vibe_pub_draft_v3', JSON.stringify(currentState));
             syncToDisk();
         }
 
@@ -183,12 +215,8 @@
         async function checkBridge() {
             try {
                 const response = await fetch(`${BRIDGE_URL}/status`);
-                if (response.ok) {
-                    bridgeOnline = true;
-                    updateBridgeUI(true);
-                } else {
-                    throw new Error();
-                }
+                bridgeOnline = response.ok;
+                updateBridgeUI(bridgeOnline);
             } catch (e) {
                 bridgeOnline = false;
                 updateBridgeUI(false);
@@ -199,14 +227,14 @@
             const dot = document.getElementById('bridge-dot');
             const text = document.getElementById('bridge-text');
             if (online) {
-                dot.classList.remove('status-offline');
                 dot.classList.add('status-online');
+                dot.classList.remove('status-offline');
                 text.textContent = 'DISK_LINK: CONNECTED';
-                text.classList.remove('text-zinc-600');
                 text.classList.add('text-[#ff00ff]');
+                text.classList.remove('text-zinc-600');
             } else {
-                dot.classList.remove('status-online');
                 dot.classList.add('status-offline');
+                dot.classList.remove('status-online');
                 text.textContent = 'DISK_LINK: OFFLINE';
                 text.classList.remove('text-[#ff00ff]');
                 text.classList.add('text-zinc-600');
@@ -216,7 +244,7 @@
         async function syncToDisk() {
             if (!bridgeOnline) return;
             const statusIndicator = document.getElementById('sync-status-indicator');
-            statusIndicator.style.opacity = '1';
+            if (statusIndicator) statusIndicator.style.opacity = '1';
             
             try {
                 await fetch(`${BRIDGE_URL}/sync`, {
@@ -224,112 +252,145 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(currentState)
                 });
-                setTimeout(() => { statusIndicator.style.opacity = '0'; }, 1000);
-            } catch (e) {
-                console.error('Sync failed.');
-                checkBridge();
-            }
+                setTimeout(() => { if (statusIndicator) statusIndicator.style.opacity = '0'; }, 1000);
+            } catch (e) { console.error('Sync failed.'); }
         }
 
         function renderAll() {
-            // Render Meta Display
-            const metaContainer = document.getElementById('session-meta-display');
-            const next = currentState.next_session || { date: 'TBD', time: 'TBD', location: 'TBD' };
+            renderSessionTabs();
             
-            metaContainer.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex justify-between items-start gap-4 p-3 bg-[#080808] border border-zinc-900 rounded-sm">
-                        <div class="flex-1 space-y-4">
+            const activeId = currentState.active_session_id;
+            const session = currentState.sessions.find(s => s.id === activeId);
+            
+            const ui = document.getElementById('active-session-ui');
+            const empty = document.getElementById('no-session-state');
+            
+            if (!session) {
+                ui.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            ui.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            // Render Metadata
+            document.getElementById('session-meta-display').innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[9px] text-zinc-600 uppercase font-bold">Date</label>
+                            <div class="text-sm text-white">${session.date}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-8">
                             <div>
-                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Session Date</label>
-                                <div class="text-sm text-white">${next.date}</div>
-                            </div>
-                            <div>
-                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Time Window</label>
-                                <div class="text-sm text-zinc-400 font-mono">${next.time}</div>
+                                <label class="text-[9px] text-zinc-600 uppercase font-bold">Time</label>
+                                <div class="text-sm text-zinc-400 font-mono">${session.time}</div>
                             </div>
                             <div>
                                 <label class="text-[9px] text-zinc-600 uppercase font-bold">Location</label>
-                                <div class="text-sm text-zinc-400">${next.location}</div>
+                                <div class="text-sm text-zinc-400">${session.location}</div>
                             </div>
                         </div>
-                        <div class="flex flex-col gap-2 min-w-[120px]">
-                            <button onclick="editSessionMeta()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-zinc-500 hover:border-[#00ffff] hover:text-[#00ffff] transition-all">Edit Metadata</button>
-                        </div>
                     </div>
+                    <button onclick="editSessionMeta()" class="text-[9px] uppercase px-3 py-2 border border-zinc-800 text-zinc-500 hover:border-[#00ffff] hover:text-[#00ffff]">Edit Meta</button>
                 </div>
             `;
 
-            renderLogsList();
+            renderLogsList(session);
         }
 
-        function renderLogsList() {
+        function renderSessionTabs() {
+            const container = document.getElementById('session-tabs');
+            container.innerHTML = currentState.sessions.map(s => `
+                <div onclick="switchSession('${s.id}')" class="session-tab ${s.id === currentState.active_session_id ? 'active' : ''} ${s.id === currentState.advertised_session_id ? 'advertised' : ''}">
+                    <div class="font-bold mb-1">${s.date}</div>
+                    <div class="opacity-50 text-[8px]">${s.location}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderLogsList(session) {
             const container = document.getElementById('management-container');
-            const emptyState = document.getElementById('empty-management-state');
-            
-            if (!currentState.logs || currentState.logs.length === 0) {
-                container.innerHTML = "";
-                emptyState.classList.remove('hidden');
+            if (session.logs.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-zinc-800 text-[10px] uppercase tracking-widest border border-dashed border-zinc-900">No logs in this bucket</div>';
                 return;
             }
-            emptyState.classList.add('hidden');
 
-            container.innerHTML = currentState.logs.map((log, index) => `
-                <div class="p-6 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-700 transition-colors group">
+            container.innerHTML = session.logs.map((log, index) => `
+                <div class="p-6 bg-[#080808] border border-zinc-900 rounded-sm group hover:border-zinc-700 transition-colors">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <div class="text-xs font-bold text-[#00ffff] mb-1">${log.name}</div>
                             <div class="text-[11px] text-zinc-400 leading-relaxed mb-3">${log.description}</div>
-                            ${log.link ? `<div class="text-[9px] text-zinc-600 font-mono underline opacity-50 group-hover:opacity-100">${log.link}</div>` : ''}
+                            ${log.link ? `<div class="text-[9px] text-zinc-600 font-mono truncate max-w-xs opacity-50 group-hover:opacity-100 underline">${log.link}</div>` : ''}
                         </div>
                         <div class="flex gap-4 ml-4">
-                            <button onclick="editLog(${index})" class="text-[10px] text-zinc-600 hover:text-white uppercase transition-colors">Edit</button>
-                            <button onclick="deleteLog(${index})" class="text-[10px] text-red-900/50 hover:text-red-500 uppercase transition-colors">Delete</button>
+                            <button onclick="editLog(${index})" class="text-[10px] text-zinc-600 hover:text-white uppercase">Edit</button>
+                            <button onclick="deleteLog(${index})" class="text-[10px] text-red-900/50 hover:text-red-500 uppercase">Delete</button>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function editSessionMeta() {
-            const s = currentState.next_session;
-            const date = prompt("Session Date:", s.date);
-            const time = prompt("Time Window:", s.time);
-            const loc = prompt("Location:", s.location);
-            
-            if (date !== null) s.date = date;
-            if (time !== null) s.time = time;
-            if (loc !== null) s.location = loc;
-            
+        function createNewSession() {
+            const id = `session_${Date.now()}`;
+            currentState.sessions.unshift({
+                id: id,
+                date: "NEW_SESSION",
+                time: "TBD",
+                location: "TBD",
+                logs: []
+            });
+            currentState.active_session_id = id;
             saveDraft();
             renderAll();
         }
 
-        function editLog(index) {
-            const log = currentState.logs[index];
-            const name = prompt("Name:", log.name);
-            const desc = prompt("Description:", log.description);
-            const link = prompt("Link:", log.link);
-            
-            if (name !== null) log.name = name;
-            if (desc !== null) log.description = desc;
-            if (link !== null) log.link = link;
-            
+        function switchSession(id) {
+            currentState.active_session_id = id;
+            renderAll();
             saveDraft();
-            renderLogsList();
+        }
+
+        function setAsAdvertised() {
+            currentState.advertised_session_id = currentState.active_session_id;
+            saveDraft();
+            renderAll();
+        }
+
+        function deleteSession() {
+            if (confirm("Delete this session bucket?")) {
+                const idx = currentState.sessions.findIndex(s => s.id === currentState.active_session_id);
+                currentState.sessions.splice(idx, 1);
+                currentState.active_session_id = currentState.sessions.length > 0 ? currentState.sessions[0].id : null;
+                saveDraft();
+                renderAll();
+            }
+        }
+
+        function editSessionMeta() {
+            const s = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const date = prompt("Date:", s.date);
+            const time = prompt("Time:", s.time);
+            const loc = prompt("Location:", s.location);
+            if (date) s.date = date;
+            if (time) s.time = time;
+            if (loc) s.location = loc;
+            saveDraft();
+            renderAll();
         }
 
         function addLogEntry() {
+            const session = currentState.sessions.find(s => s.id === currentState.active_session_id);
             const name = document.getElementById('log-name').value;
             const link = document.getElementById('log-link').value;
             const desc = document.getElementById('log-desc').value;
 
-            if (!name || !desc) {
-                alert("Missing required fields.");
-                return;
-            }
+            if (!name || !desc) return alert("Name and Description required.");
 
-            currentState.logs.unshift({ name, description: desc, link });
+            session.logs.unshift({ name, description: desc, link });
             document.getElementById('log-name').value = "";
             document.getElementById('log-link').value = "";
             document.getElementById('log-desc').value = "";
@@ -337,17 +398,31 @@
             renderAll();
         }
 
+        function editLog(index) {
+            const session = currentState.sessions.find(s => s.id === currentState.active_session_id);
+            const log = session.logs[index];
+            const name = prompt("Name:", log.name);
+            const desc = prompt("Description:", log.description);
+            const link = prompt("Link:", log.link);
+            if (name) log.name = name;
+            if (desc) log.description = desc;
+            if (link) log.link = link;
+            saveDraft();
+            renderAll();
+        }
+
         function deleteLog(index) {
+            const session = currentState.sessions.find(s => s.id === currentState.active_session_id);
             if (confirm("Delete log?")) {
-                currentState.logs.splice(index, 1);
+                session.logs.splice(index, 1);
                 saveDraft();
-                renderLogsList();
+                renderAll();
             }
         }
 
         function resetData() {
-            if (confirm("ERASE LOCAL CACHE AND RE-SYNC FROM DISK?")) {
-                localStorage.removeItem('vibe_pub_draft_v2');
+            if (confirm("Reset everything from disk?")) {
+                localStorage.removeItem('vibe_pub_draft_v3');
                 location.reload();
             }
         }

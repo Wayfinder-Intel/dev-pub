@@ -1,8 +1,1 @@
-{
-  "next_session": {
-    "date": "TBD",
-    "time": "TBD",
-    "location": "Online / Discord"
-  },
-  "logs": []
-}
+{"active_session_id":"session_10apr2026","advertised_session_id":"session_1778831148150","sessions":[{"id":"session_1778831148150","date":"19 June 2026","time":"1500","location":"Chapman Taylor","logs":[]},{"id":"session_15may2026","date":"15 May 2026","time":"1500-1800","location":"Chapman Taylor Pub","logs":[{"name":"Esskar","description":"Worked on ingestion tools.","link":""},{"name":"Chapboi","description":"Vibed in head due to lack of computer. And had a beer.","link":""},{"name":"mike4dot0","description":"Drank a beer and chatted productively.","link":""},{"name":"Pipes","description":"Worked on a browser extension for researchers.","link":""},{"name":"Grokbeer","description":"Made a darts scoreboard app!","link":""},{"name":"TinyPirate","description":"Made tweaks to the site and also did further work on a social network graph analysis tool.","link":""}]},{"id":"session_10apr2026","date":"10 April 2026","time":"1500-1800","location":"Chapman Taylor Pub","logs":[{"name":"Grokbeer","description":"Worked on the Welly BYO app, a way to find the nearest bottle store for any given BYO restaurant in Wellington!","link":"https://welly-byo--grokbeer.replit.app/"},{"name":"TinyPirate","description":"Worked on and shipped this website.","link":"https://github.com/Wayfinder-Intel/dev-pub"}]}]}

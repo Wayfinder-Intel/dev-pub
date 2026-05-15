@@ -137,7 +137,7 @@
             align-items: center;
             border-right: 2px solid var(--border-muted);
             position: relative;
-            align-self: start; /* Fix: correctly stop at content height */
+            align-self: start;
         }
         .session-sidebar::before, .session-sidebar::after {
             content: '';
@@ -156,23 +156,18 @@
             transform: rotate(180deg);
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            font-size: 16px;
+            font-size: 14px;
             color: #ccc;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
             padding: 3rem 0;
             white-space: nowrap;
         }
         .vertical-metadata b { 
             color: var(--accent-magenta); 
             font-weight: 700;
-            margin-bottom: 0.4rem;
-            display: inline-block;
         }
-        .vertical-metadata span b { color: var(--accent-cyan); }
-        .vertical-metadata span:nth-child(2) b { color: var(--accent-magenta); }
-        .vertical-metadata span:nth-child(3) b { color: var(--accent-cyan); }
     </style>
 </head>
 <body class="min-h-screen selection:bg-[#ff00ff] selection:text-white">
@@ -204,7 +199,7 @@
                     <div class="text-xs uppercase tracking-widest text-[#ff00ff] mb-2 font-bold glitch-text" data-text="Status: Incoming Session">Status: Incoming Session</div>
                     <div id="session-details" class="space-y-4">
                         <div class="text-3xl font-bold text-white tracking-tight">
-                            <span id="session-date">Loading...</span>
+                            <span id="session-date">TBD</span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg md:text-xl text-zinc-400">
                             <div class="flex items-center gap-2">
@@ -263,34 +258,36 @@
         }
 
         function renderPage(data) {
-            // Render "Next Session" Banner
-            const next = data.next_session;
-            if (next) {
-                document.getElementById('session-date').textContent = next.date || 'TBD';
-                document.getElementById('session-time').textContent = next.time || 'TBD';
-                document.getElementById('session-location').textContent = next.location || 'TBD';
+            // Render "Advertised" Session Banner
+            const advertised = data.sessions.find(s => s.id === data.advertised_session_id);
+            if (advertised) {
+                document.getElementById('session-date').textContent = advertised.date || 'TBD';
+                document.getElementById('session-time').textContent = advertised.time || 'TBD';
+                document.getElementById('session-location').textContent = advertised.location || 'TBD';
             }
 
-            // Render Logs
+            // Render Grouped Sessions
             const masterContainer = document.getElementById('sessions-master-container');
             const emptyState = document.getElementById('empty-state');
             const logCount = document.getElementById('log-count');
 
-            const logs = data.logs || [];
+            const sessionsWithLogs = data.sessions.filter(s => s.logs && s.logs.length > 0);
 
-            if (logs.length > 0) {
+            if (sessionsWithLogs.length > 0) {
                 emptyState.classList.add('hidden');
-                logCount.textContent = `${logs.length} ENTRIES DISCOVERED`;
+                logCount.textContent = `${sessionsWithLogs.length} SESSIONS DISCOVERED`;
                 
-                masterContainer.innerHTML = `
+                masterContainer.innerHTML = sessionsWithLogs.map(session => `
                     <div class="session-container group">
                         <div class="session-sidebar border-zinc-800">
                             <div class="vertical-metadata font-mono">
-                                <span><b>ARCHIVE</b> LOGS</span>
+                                <span><b>LOC</b> ${session.location || 'UNKNOWN'}</span>
+                                <span><b>DATE</b> ${session.date || 'UNKNOWN'}</span>
+                                <span><b>TIME</b> ${session.time || 'UNKNOWN'}</span>
                             </div>
                         </div>
                         <div class="space-y-6">
-                            ${logs.map(log => `
+                            ${session.logs.map(log => `
                                 <div class="glow-border bg-[#0d0d0d] p-6 rounded-sm border-l-4 border-l-zinc-800 hover:border-l-[#ff00ff] transition-all">
                                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                                         <h3 class="text-lg font-bold text-[#00ffff]">${log.name || 'Anonymous'}</h3>
@@ -307,10 +304,10 @@
                             `).join('')}
                         </div>
                     </div>
-                `;
+                `).join('');
             } else {
                 emptyState.classList.remove('hidden');
-                logCount.textContent = "0 ENTRIES DISCOVERED";
+                logCount.textContent = "0 SESSIONS DISCOVERED";
                 masterContainer.innerHTML = '';
             }
         }
